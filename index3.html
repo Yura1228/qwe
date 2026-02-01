@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Маршрутный лист</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background-color: #f9f9f9;
+  }
+  h1, h2 {
+    text-align: center;
+  }
+  .section {
+    margin-top: 20px;
+    padding: 10px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  label {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+  }
+  input, select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 4px;
+    box-sizing: border-box;
+  }
+  button {
+    margin: 10px auto;
+    display: inline-block;
+    padding: 12px 24px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+  }
+ 
+  /* окно для просмотра файла */
+  #savedDataModal {
+    display: none;
+    position: fixed;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 700px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    padding: 20px;
+    z-index: 999;
+  }
+  #savedDataModal h2 {
+    margin-top: 0;
+  }
+  #recordsList {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+  }
+  #recordsList li {
+    padding: 8px;
+    margin-bottom: 4px;
+    background: #eef;
+    cursor: pointer;
+    border-radius: 4px;
+    position: relative;
+  }
+  #recordsList li:hover {
+    background: #dde;
+  }
+  /* кнопка удаления внутри списка */
+  .deleteButton {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .deleteButton:hover {
+    background: #c82333;
+  }
+</style>
+</head>
+<body>
+
+<h1>Сведения о единице ССПС, пробеге и движении топливно-смазочных материалов</h1>
+
+<div class="section" id="formSection">
+  <h2>Дата проверки единицы ССПС</h2>
+  <label for="date1">Дата проверки:</label>
+  <input type="date" id="date1" min="2020-01-01" max="2050-12-31" />
+
+  <div class="section" id="formSection">
+  <h2>I. Сведения о машине</h2>
+  <label for="engineerName">Наименование предприятия</label>
+  <input type="text" id="engineerName" placeholder="Наименование предприятия" />
+
+  <label for="assistantName">Наименование, тип машины</label>
+  <input type="text" id="assistantName" placeholder="Наименование, тип машины" />
+
+  <label for="instructorName">Номер машины №</label>
+  <input type="text" id="instructorName" placeholder="Номер машины №" />
+
+  <div class="section2" id="formSection2"></div>
+  <h2>II. Сведения о пробеге</h2>
+  <label>Показания спидометра, при выезде (км)</label>
+  <input type="text" id="startWorkTime" placeholder="Показания спидометра, при выезде (км)" />
+
+  <label for="medWorker">Мото-часов при выезде</label>
+  <input type="text" id="medWorker" placeholder="Мото-часов при выезде" />
+
+  <label for="medPassDate">Показания при возврате (км)</label>
+  <input type="text" id="medPassDate" placeholder="Показания при возврате (км)" />
+
+  <label>Мото-часов при возврате</label>
+  <input type="text" id="preTripTime" placeholder="Мото-часов при возврате"/>
+
+  <div class="section3" id="formSection3"></div>
+  <h2>III. Движение топливно-смазочных материалов</h2>
+  <h3>Топливо</h3>
+  <label>Марка топлива</label>
+  <input type="text" id="postTripTime" placeholder="Марка топлива" />
+</div>
+
+  <label for="routeNumber">Выдано (л)</label>
+  <input type="text" id="routeNumber" placeholder="Выдано (л)" />
+
+  <label for="cassetteNumber">Остаток при выезде (л)</label>
+  <input type="text" id="cassetteNumber" placeholder="Остаток при выезде (л)" />
+
+  <label for="pBType">Остаток при возврате (л)</label>
+  <input type="text" id="pBType" placeholder="Остаток при возврате (л)" />
+  
+  <h3>Смазка, масло</h3>
+  <label>Марка масла</label>
+  <input type="text" id="pBStartTime" placeholder="Марка масла" />
+  
+  <label for="ekVersion">Выдано (л или кг)</label>
+  <input type="text" id="ekVersion" placeholder="Выдано (л или кг)" />
+</div>
+<!-- Кнопка для очистки данных раздела II -->
+<button onclick="clearTripFields()" style="background-color:#dc3545; margin-top:10px; padding:8px 16px; border:none; color:white; cursor:pointer;">Очистить данные о поездке</button>
+</div>
+<!-- Кнопки -->
+<button id="saveBtn" onclick="saveData()"style="background-color:#28a745; margin-top:10px; padding:8px 16px; border:none; color:white; cursor:pointer;">Сохранить</button>
+<button id="viewBtn" onclick="showSavedRecords()"style="background-color:#007bff; margin-top:10px; padding:8px 16px; border:none; color:white; cursor:pointer;">Просмотреть сохранённые записи</button>
+  
+<!-- Убраны кнопки экспорт и импорт -->
+<!-- Кнопки для экспорта и импорта -->
+<button onclick="exportSelectedRecords()"style="background-color:#007bff; margin-top:10px; padding:8px 16px; border:none; color:white; cursor:pointer;">Экспортировать выбранные</button>
+<button onclick="exportData()"style="background-color:#007bff; margin-top:10px; padding:8px 16px; border:none; color:white; cursor:pointer;">Экспортировать данные</button>
+<input type="file" id="importFile" style="display:none" onchange="importDataFromFile()" />
+<button onclick="document.getElementById('importFile').click()"style="background-color:#007bff; margin-top:10px; padding:8px 16px; border:none; color:white; cursor:pointer;">Импортировать данные</button>
+
+<!-- Модальное окно с сохранёнными данными -->
+<div id="savedDataModal">
+  <div>
+    <span id="closeModal" onclick="closeModal()">&times;</span>
+    <h2>Записи</h2>
+    <ul id="recordsList"></ul>
+    <button onclick="closeModal()">Закрыть</button>
+  </div>
+</div>
+
+<script>
+let savedRecords = []; // массив для хранения всех сохранённых данных
+
+// Загружать из localStorage при запуске
+if (localStorage.getItem('routeSheetRecords')) {
+  savedRecords = JSON.parse(localStorage.getItem('routeSheetRecords'));
+}
+
+
+
+function clearTripFields() {
+  if (confirm('Вы уверены, что хотите очистить все данные о поездке?')) {
+    document.getElementById('date1').value = '';
+    document.getElementById('engineerName').value = '';
+    document.getElementById('assistantName').value = '';
+    document.getElementById('instructorName').value = '';
+    document.getElementById('startWorkTime').value = '';
+    document.getElementById('medWorker').value = '';
+    document.getElementById('medPassDate').value = '';
+    document.getElementById('preTripTime').value = '';
+    document.getElementById('postTripTime').value = '';
+    document.getElementById('routeNumber').value = '';
+    document.getElementById('cassetteNumber').value = '';
+    document.getElementById('pBType').value = '';
+    document.getElementById('pBStartTime').value = '';
+    document.getElementById('ekVersion').value = '';
+  }
+}
+
+// Функция для отображения списка записей
+function showSavedRecords() {
+  const listContainer = document.getElementById('recordsList');
+  listContainer.innerHTML = '';
+
+  if (savedRecords.length === 0) {
+    alert('Нет сохранённых записей.');
+    return;
+  }
+
+  savedRecords.forEach((record, index) => {
+    const li = document.createElement('li');
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'recordCheckbox';
+    checkbox.dataset.index = index;
+
+    // Обработка клика по чекбоксу — чтобы он не запускал fillForm
+    checkbox.onclick = (e) => {
+      e.stopPropagation(); // чтобы клик по чекбоксу не срабатывал на li
+    };
+
+    const span = document.createElement('span');
+    span.textContent = ` Запись ${index + 1} (дата: ${record.date1})`;
+
+    li.appendChild(checkbox);
+    li.appendChild(span);
+
+    // Обработчик для заполнения формы при клике по li, кроме чекбокса
+    li.onclick = () => {
+      fillFormWithRecord(record);
+      closeModal();
+    };
+
+    // Кнопка удалить
+    const delBtn = document.createElement('button');
+    delBtn.textContent = 'Удалить';
+    delBtn.className = 'deleteButton';
+    delBtn.onclick = (e) => {
+      e.stopPropagation();
+      deleteRecord(index);
+    };
+
+    li.appendChild(delBtn);
+    listContainer.appendChild(li);
+  });
+
+  document.getElementById('savedDataModal').style.display = 'block';
+  
+}
+
+function exportSelectedRecords() {
+  const checkboxes = document.querySelectorAll('.recordCheckbox');
+  const selectedRecords = [];
+
+  checkboxes.forEach((cb) => {
+    if (cb.checked) {
+      const index = parseInt(cb.dataset.index, 10);
+      selectedRecords.push(savedRecords[index]);
+    }
+  });
+
+  if (selectedRecords.length === 0) {
+    alert('Нет выбранных записей для экспорта.');
+    return;
+  }
+
+  const dataStr = JSON.stringify(selectedRecords, null, 2);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'selected_route_sheet_data.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Удаление записи по индексу
+function deleteRecord(index) {
+  if (confirm(`Удалить запись ${index + 1}?`)) {
+    savedRecords.splice(index, 1);
+    localStorage.setItem('routeSheetRecords', JSON.stringify(savedRecords));
+    showSavedRecords(); // обновляем список
+  }
+}
+
+// Заполнить форму выбранной записью
+function fillFormWithRecord(record) {
+  document.getElementById('date1').value = record.date1 || '';
+  document.getElementById('engineerName').value = record.engineerName || '';
+  document.getElementById('assistantName').value = record.assistantName || '';
+  document.getElementById('instructorName').value = record.instructorName || '';
+  document.getElementById('startWorkTime').value = record.startWorkTime || '';
+  document.getElementById('medWorker').value = record.medWorker || '';
+  document.getElementById('medPassDate').value = record.medPassDate || '';
+  document.getElementById('preTripTime').value = record.preTripTime || '';
+  document.getElementById('postTripTime').value = record.postTripTime || '';
+  document.getElementById('routeNumber').value = record.routeNumber || '';
+  document.getElementById('cassetteNumber').value = record.cassetteNumber || '';
+  document.getElementById('pBType').value = record.pBType || '';
+  document.getElementById('pBStartTime').value = record.pBStartTime || '';
+  document.getElementById('ekVersion').value = record.ekVersion || '';
+}
+
+// Функция для сохранения текущих данных
+function saveData() {
+  if (!areFieldsFilled()) {
+    alert('Пожалуйста, заполните все поля перед сохранением.');
+    return;
+  }
+  const data = getFormData();
+  savedRecords.push(data);
+  localStorage.setItem('routeSheetRecords', JSON.stringify(savedRecords));
+  alert('Запись сохранена!');
+}
+function areFieldsFilled() {
+  const fields = [
+    'date1', 'engineerName', 'assistantName', 'instructorName',
+    'startWorkTime', 'medWorker', 'medPassDate',
+    'preTripTime', 'postTripTime', 'routeNumber', 'cassetteNumber',
+    'pBType', 'pBStartTime', 'ekVersion'
+  ];
+
+  for (let id of fields) {
+    const value = document.getElementById(id).value.trim();
+    if (!value) {
+      return false; // если хотя бы одно поле пустое
+    }
+  }
+  return true; // все поля заполнены
+}
+// Получение данных формы
+function getFormData() {
+  return {
+    date1: document.getElementById('date1').value,
+    engineerName: document.getElementById('engineerName').value,
+    assistantName: document.getElementById('assistantName').value,
+    instructorName: document.getElementById('instructorName').value,
+    startWorkTime: document.getElementById('startWorkTime').value,
+    medWorker: document.getElementById('medWorker').value,
+    medPassDate: document.getElementById('medPassDate').value,
+    preTripTime: document.getElementById('preTripTime').value,
+    postTripTime: document.getElementById('postTripTime').value,
+    routeNumber: document.getElementById('routeNumber').value,
+    cassetteNumber: document.getElementById('cassetteNumber').value,
+    pBType: document.getElementById('pBType').value,
+    pBStartTime: document.getElementById('pBStartTime').value,
+    ekVersion: document.getElementById('ekVersion').value
+  };
+}
+// Экспорт данных
+function exportData() {
+  if (savedRecords.length === 0) {
+    alert('Нет данных для экспорта.');
+    return;
+  }
+  const dataStr = JSON.stringify(savedRecords, null, 2);
+  // Создаем временную ссылку для скачивания файла
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'route_sheet_data.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Импорт данных из файла
+function importDataFromFile() {
+  const fileInput = document.getElementById('importFile');
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const importedData = JSON.parse(reader.result);
+      if (Array.isArray(importedData)) {
+        // Добавляем импортированные записи
+        savedRecords = savedRecords.concat(importedData);
+        localStorage.setItem('routeSheetRecords', JSON.stringify(savedRecords));
+        alert('Данные успешно импортированы!');
+      } else {
+        alert('Некорректный формат файла.');
+      }
+    } catch (e) {
+      alert('Ошибка при чтении файла.');
+    }
+  };
+  reader.readAsText(file);
+  // Сбросим поле файла, чтобы можно было повторно импортировать тот же файл
+  fileInput.value = '';
+}
+// Закрыть модальное окно
+function closeModal() {
+  document.getElementById('savedDataModal').style.display = 'none';
+}
+// Остальные функции для импорт/экспорт убраны
+</script>
+
+</body>
+</html>

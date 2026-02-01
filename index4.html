@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>График работы мастера участка</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    background-color: #f9f9f9;
+  }
+  h1 {
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+  }
+  .form-group {
+    margin-bottom: 10px;
+  }
+  label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 3px;
+  }
+  input[type="file"] {
+    display: none;
+  }
+  input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+  }
+  button {
+    padding: 10px 20px;
+    margin-top: 10px;
+    cursor: pointer;
+    margin-right: 10px;
+  }
+  .shift-list {
+    margin-top: 20px;
+  }
+  .shift-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .shift-table th, .shift-table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+  }
+  .shift-table tr.selected {
+    background-color: #d0e9ff;
+  }
+</style>
+</head>
+<body>
+
+<h1>Мастер участка: график работы</h1>
+
+<div id="form">
+  <div class="form-group">
+    <label for="shiftName">Номер смены</label>
+    <input type="text" id="shiftName" placeholder="Номер смены" />
+  </div>
+  <div class="form-group">
+    <label for="startTime">Время начала (например, 08:00)</label>
+    <input type="time" id="startTime" placeholder="Время начала" />
+  </div>
+  <div class="form-group">
+    <label for="endTime">Время окончания (например, 17:00)</label>
+    <input type="time" id="endTime" placeholder="Время окончания" />
+  </div>
+  <div class="form-group">
+    <label for="name1">Участок работы</label>
+    <input type="text" id="name1" placeholder="Участок работы" />
+  </div>
+  <div class="form-group">
+    <label for="name2">Вид работы</label>
+    <input type="text" id="name2" placeholder="Вид работы" />
+  </div>
+  <div class="form-group">
+    <label for="name3">Сколь тон за смену перевезено</label>
+    <input type="text" id="name3" placeholder="Перевезено тон" />
+  </div>
+  <div class="form-group">
+    <label for="name4">Станция/Перегон</label>
+    <input type="text" id="name4" placeholder="Станция или перегон" />
+  </div>
+  <button onclick="addShift()">Добавить смену</button>
+</div>
+
+<div style="margin-top:20px;">
+  <button onclick="editSelectedShift()">Редактировать выбранную</button>
+  <button onclick="deleteSelectedShift()">Удалить выбранную</button>
+  <button onclick="exportShifts()">Экспортировать</button>
+  <button onclick="document.getElementById('importFile').click()">Импортировать</button>
+<input type="file" id="importFile" accept=".json" onchange="importShifts(event)" style="display:none" />
+  <button onclick="clearTable()">Очистить таблицу</button>
+  <button onclick="selectAllShifts()">Выделить всё</button>
+</div>
+
+
+
+<div class="shift-list">
+  <h2>Список смен:</h2>
+  <table class="shift-table" id="shiftTable">
+    <thead>
+      <tr>
+        <th>Выбрать</th>
+        <th>Номер смены</th>
+        <th>Время начала</th>
+        <th>Время окончания</th>
+        <th>Участок работы</th>
+        <th>Вид работы</th>
+        <th>Перевезено (тон)</th>
+        <th>Станция/Перегон</th>
+      </tr>
+    </thead>
+    <tbody id="shiftTableBody"></tbody>
+  </table>
+</div>
+
+<script>
+  let shifts = [];
+  let selectedIndexes = [];
+  function selectAllShifts() {
+  selectedIndexes = shifts.map((_, index) => index);
+  renderTable();
+}
+  function clearTable() {
+    if (confirm('Вы действительно хотите очистить все данные?')) {
+      document.getElementById('shiftName').value = '';
+      document.getElementById('startTime').value = '';
+      document.getElementById('endTime').value = '';
+      document.getElementById('name1').value = '';
+      document.getElementById('name2').value = '';
+      document.getElementById('name3').value = '';
+      document.getElementById('name4').value = '';
+    }
+  }
+
+  function saveShifts() {
+    localStorage.setItem('shifts', JSON.stringify(shifts));
+  }
+
+  function loadShifts() {
+    const data = localStorage.getItem('shifts');
+    if (data) {
+      shifts = JSON.parse(data);
+    }
+  }
+
+  loadShifts();
+
+  function renderTable() {
+    const tbody = document.getElementById('shiftTableBody');
+    tbody.innerHTML = '';
+
+    shifts.forEach((shift, index) => {
+      const row = document.createElement('tr');
+
+      // Обработка клика по строке
+      row.onclick = () => {
+        if (selectedIndexes.includes(index)) {
+          // Убираем выделение, если уже выделено
+          selectedIndexes = selectedIndexes.filter(i => i !== index);
+        } else {
+          // Добавляем в список выделенных
+          selectedIndexes.push(index);
+        }
+        renderTable();
+      };
+
+      // Проверяем, выделена ли строка
+      if (selectedIndexes.includes(index)) {
+        row.className = 'selected';
+      }
+
+      // Ячейка с чекбоксом
+      const checkboxCell = document.createElement('td');
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = selectedIndexes.includes(index);
+      
+      checkbox.onclick = (e) => {
+        e.stopPropagation();
+        if (checkbox.checked) {
+          if (!selectedIndexes.includes(index)) {
+            selectedIndexes.push(index);
+          }
+        } else {
+          selectedIndexes = selectedIndexes.filter(i => i !== index);
+        }
+        renderTable();
+      };
+      checkboxCell.appendChild(checkbox);
+      row.appendChild(checkboxCell);
+
+      // Остальные ячейки
+      row.innerHTML += `
+        <td>${shift.ShiftName}</td>
+        <td>${shift.StartTime}</td>
+        <td>${shift.EndTime}</td>
+        <td>${shift.Name1}</td>
+        <td>${shift.Name2}</td>
+        <td>${shift.Name3}</td>
+        <td>${shift.Name4}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  }
+
+  function getFormValues() {
+    return {
+      ShiftName: document.getElementById('shiftName').value.trim(),
+      StartTime: document.getElementById('startTime').value.trim(),
+      EndTime: document.getElementById('endTime').value.trim(),
+      Name1: document.getElementById('name1').value.trim(),
+      Name2: document.getElementById('name2').value.trim(),
+      Name3: document.getElementById('name3').value.trim(),
+      Name4: document.getElementById('name4').value.trim(),
+    };
+  }
+
+  function fillForm(shift) {
+    document.getElementById('shiftName').value = shift.ShiftName;
+    document.getElementById('startTime').value = shift.StartTime;
+    document.getElementById('endTime').value = shift.EndTime;
+    document.getElementById('name1').value = shift.Name1;
+    document.getElementById('name2').value = shift.Name2;
+    document.getElementById('name3').value = shift.Name3;
+    document.getElementById('name4').value = shift.Name4;
+  }
+
+  function addShift() {
+    const shift = getFormValues();
+    if (!shift.ShiftName || !shift.StartTime || !shift.EndTime || !shift.Name1 || !shift.Name2 || !shift.Name3 || !shift.Name4) {
+      alert('Пожалуйста, заполните все поля');
+      return;
+    }
+    if (selectedIndexes.length > 0) {
+      // Обновляем выделенные
+      selectedIndexes.forEach(i => {
+        shifts[i] = shift;
+      });
+      selectedIndexes = [];
+    } else {
+      shifts.push(shift);
+    }
+    saveShifts();
+    renderTable();
+    document.getElementById('form').reset();
+  }
+
+  function editSelectedShift() {
+    if (selectedIndexes.length !== 1) {
+      alert('Выберите одну смену для редактирования');
+      return;
+    }
+    fillForm(shifts[selectedIndexes[0]]);
+  }
+
+  function deleteSelectedShift() {
+    if (selectedIndexes.length === 0) {
+      alert('Выберите смены для удаления');
+      return;
+    }
+    if (confirm('Удалить выбранные смены?')) {
+      // Удаляем с конца, чтобы не сбиться с индексами
+      selectedIndexes.sort((a,b) => b - a);
+      selectedIndexes.forEach(i => {
+        shifts.splice(i, 1);
+      });
+      selectedIndexes = [];
+      saveShifts();
+      renderTable();
+    }
+  }
+
+  function exportShifts() {
+    const dataStr = JSON.stringify(shifts, null, 2);
+    const blob = new Blob([dataStr], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'shifts.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importShifts(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const importedShifts = JSON.parse(e.target.result);
+      if (Array.isArray(importedShifts)) {
+        importedShifts.forEach(shift => {
+          if (typeof shift === 'object' && shift !== null) {
+            shifts.push(shift);
+          }
+        });
+        saveShifts();
+        renderTable();
+      } else {
+        alert('Файл должен содержать массив объектов');
+      }
+    } catch (err) {
+      alert('Ошибка при чтении файла');
+    }
+    // После обработки сбрасываем значение input,
+    // чтобы можно было выбрать тот же файл повторно
+    event.target.value = "";
+  };
+  reader.readAsText(file);
+}
+  
+
+  // Изначально отрисуем таблицу
+  renderTable();
+</script>
+
+</body>
+</html>
