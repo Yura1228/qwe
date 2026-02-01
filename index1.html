@@ -8,20 +8,25 @@
 body {
   font-family: 'Nunito Sans', sans-serif;
   background-color: #f0f0f0;
+  margin: 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh;
 }
 .container {
   display: flex;
-  gap: 20px;
+  flex-wrap: wrap; /* перенос элементов, если мало места */
+  justify-content: center; /* по центру */
+  gap: 20px; /* промежутки между блоками */
+  padding: 10px;
+  max-width: 100%;
 }
 .link-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 150px;
+  width: 150px; /* фиксированная ширина на больших экранах */
   padding: 15px;
   background-color: #fff;
   border-radius: 10px;
@@ -29,6 +34,8 @@ body {
   cursor: pointer;
   text-decoration: none;
   transition: transform 0.2s, box-shadow 0.2s;
+  flex: 1 1 150px; /* позволяет растягиваться и сжиматься */
+  max-width: 150px; /* не превышать 150px */
 }
 .link-card:hover {
   transform: translateY(-5px);
@@ -44,6 +51,15 @@ body {
   font-size: 16px;
   font-weight: bold;
   color: #333;
+  text-align: center;
+}
+
+/* Для мобильных устройств — карточки растягиваются на всю ширину */
+@media (max-width: 500px) {
+  .link-card {
+    width: 100%;
+    max-width: none;
+  }
 }
 </style>
 </head>
